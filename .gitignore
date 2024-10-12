@@ -1,0 +1,68 @@
+# Ignore Node.js dependencies
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore .env files
+.env
+.env.*.local
+
+# Ignore build and static files for Vue.js
+build/
+public/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
+# Ignore lock files
+package-lock.json
+yarn.lock
+
+# Ignore logs
+*.log
+
+# Ignore MacOS files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db
+
+# Ignore coverage directory from test tools
+coverage/
+nyc_output/
+
+# Ignore dependencies and build outputs for .NET API
+bin/
+obj/
+*.log
+
+# Ignore user-specific settings
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore publish output for .NET
+publish/
+
+# Ignore secrets
+secrets.json
+
+# Ignore Rider IDE project settings
+.idea/
+.idea/*
+
+# Ignore Resharper settings
+*.DotSettings.user
+
+# Ignore any Docker-related files
+docker-compose.override.yml
+*.iml
+
+# Ignore temporary files and compiled code
+*.swp
+*.tmp

@@ -1,0 +1,56 @@
+version: '3.4'
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: backend_image
+    ports:
+      - "5000:5000"  # Map host port 5000 to container port 80
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      CONNECTION_STRINGS__POSTGRES: "Host=postgres;Database=mydb;Username=admin;Password=password" # Example env var
+    depends_on:
+      - postgres
+    networks:
+      - production-network
+    restart: always  # Ensure the container restarts if it crashes
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/weatherforecast"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - production-network
+    depends_on:
+      - backend
+    restart: always
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "mydb"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Ensure persistent storage for production
+    networks:
+      - production-network
+    restart: always
+
+networks:
+  production-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
