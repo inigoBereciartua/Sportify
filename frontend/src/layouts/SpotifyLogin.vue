@@ -10,7 +10,7 @@ export default {
   name: 'SpotifyLogin',
   methods: {
     loginWithSpotify() {
-      window.location.href = 'http://localhost:5000/login';
+      window.location.href = 'http://localhost:5000/auth/login';
     }
   }
 };

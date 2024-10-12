@@ -7,9 +7,9 @@
             <h2>Recently Played Songs</h2>
             <div class="track-grid">
                 <div v-for="(track, index) in recentTracks" :key="index" class="track-item">
-                    <img :src="track.track.album.images[0].url" alt="Album Cover" class="album-cover" />
-                    <p class="track-name"><strong>{{ track.track.name }}</strong></p>
-                    <p class="artist-name">by {{ track.track.artists[0].name }}</p>
+                    <img :src="track.picture" alt="Album Cover" class="album-cover" />
+                    <p class="track-name"><strong>{{ track.title }}</strong></p>
+                    <p class="artist-name">by {{ track.artist }}</p>
                 </div>
             </div>
         </div>
@@ -17,9 +17,9 @@
             <h2>Recently Played Songs Filtered by BPM</h2>
             <div class="track-grid">
                 <div v-for="(track, index) in recentTracksWithBpm" :key="index" class="track-item">
-                    <img :src="track.track.album.images[0].url" alt="Album Cover" class="album-cover" />
-                    <p class="track-name"><strong>{{ track.track.name }}</strong></p>
-                    <p class="artist-name">by {{ track.track.artists[0].name }}</p>
+                    <img :src="track.picture" alt="Album Cover" class="album-cover" />
+                    <p class="track-name"><strong>{{ track.title }}</strong></p>
+                    <p class="artist-name">by {{ track.artist }}</p>
                 </div>
             </div>
         </div>
@@ -38,18 +38,16 @@ export default {
     },
     mounted() {
         this.getUser();
-        // this.getRecentlyPlayed();
-        this.getRecentlyPlayedWithBPM();
+        this.getRecentlyPlayed();
+        // this.getRecentlyPlayedWithBPM();
     },
     methods: {
         async getUser() {
             console.log('Getting user info');
             try {
-                const response = await fetch('http://localhost:5000/userinfo', {
+                const response = await fetch('http://localhost:5000/spotify/userinfo', {
                     credentials: 'include'
                 });
-
-                console.log('Full response object:', response);
 
                 if (response.ok) {
                     const rawData = await response.text();
@@ -63,10 +61,10 @@ export default {
                             data = JSON.parse(data);
                         }
 
-                        if (data && data.display_name) {
-                            this.username = data.display_name;
+                        if (data && data.username) {
+                            this.username = data.username;
                         } else {
-                            console.error('display_name not found in response data');
+                            console.error('username not found in response data');
                         }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
@@ -82,13 +80,10 @@ export default {
         async getRecentlyPlayed() {
             console.log('Getting recently played tracks');
             try {
-                // get last 10 played tracks. 10 is a request parameter
-            
-                const response = await fetch('http://localhost:5000/recently-played', {
+                const limit = 20;
+                const response = await fetch('http://localhost:5000/spotify/recently-played?limit=' + limit, {
                     credentials: 'include'
                 });
-
-                console.log('Full response object:', response);
 
                 if (response.ok) {
                     const rawData = await response.text();
@@ -102,8 +97,7 @@ export default {
                             data = JSON.parse(data);
                         }
 
-                        console.log('Recently played tracks:', data);
-                        this.recentTracks = data.items;
+                        this.recentTracks = [...data];
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
                         return;
@@ -121,7 +115,7 @@ export default {
             try {
                 // get last 10 played tracks. 10 is a request parameter
             
-                const response = await fetch('http://localhost:5000/recently-played/bpm', {
+                const response = await fetch('http://localhost:5000/spotify/recently-played/bpm', {
                     credentials: 'include'
                 });
 
@@ -130,9 +124,12 @@ export default {
                 if (response.ok) {
                     const rawData = await response.text();
 
+                    console.log('Raw data:', rawData);
                     let data;
                     try {
                         data = JSON.parse(rawData);
+
+                        console.log('Parsed data:', data);
 
                         if (typeof data === 'string') {
                             // For some reason the data is double-encoded
