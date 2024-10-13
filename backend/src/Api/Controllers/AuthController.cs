@@ -10,7 +10,7 @@ public class AuthController : ControllerBase
     {
         var authenticationProperties = new AuthenticationProperties
         {
-            RedirectUri = "http://localhost:8080/callback"
+            RedirectUri = "http://localhost:8080/playlist-info-form"
         };
         authenticationProperties.Items["show_dialog"] = "true";
 

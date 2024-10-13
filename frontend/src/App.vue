@@ -5,6 +5,7 @@
 </template>
 
 <script>
+
 export default {
   name: 'App',
 };
@@ -36,7 +37,7 @@ body, html {
   height: 100%;
   padding: 20px;
   box-sizing: border-box; /* Ensure padding is included in the width */
-  padding-bottom: ;
+  padding-bottom: 20px;
 }
 
 button {
