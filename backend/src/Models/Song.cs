@@ -1,5 +1,3 @@
-using System;
-
 namespace sportify.backend.Models
 {
     public class Song
@@ -10,6 +8,7 @@ namespace sportify.backend.Models
         public string Album { get; set; }
         public string Picture { get; set; }
         public DateTime PlayedDate { get; set; }
+        public int Duration { get; set; }
     }
 
 }

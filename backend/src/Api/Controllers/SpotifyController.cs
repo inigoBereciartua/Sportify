@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using sportify.backend.Models;
-using System.Net.Http.Headers;
 
 [ApiController]
 [Route("[controller]")]
@@ -42,7 +41,7 @@ public class SpotifyController : ControllerBase
         var accessToken = await HttpContext.GetTokenAsync("access_token");
         if (string.IsNullOrEmpty(accessToken)) return Unauthorized();
 
-        var tracks = await _spotifyService.GetTracksByBpmAsync(accessToken, bpmTarget, 20, 5);    
+        var tracks = await _spotifyService.GetRecentTracksByBpmAsync(accessToken, bpmTarget, 5);    
         return Ok(tracks);
     }
 }

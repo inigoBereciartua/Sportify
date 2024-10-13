@@ -23,6 +23,21 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="playlist != null && playlist.songs.length > 0" class="recent-tracks">
+            <h2>Playlist tracks: {{ playlist.name  }}</h2>
+            <div class="track-grid">
+                <div v-for="(track, index) in playlist.songs" :key="index" class="track-item">
+                    <img :src="track.picture" alt="Album Cover" class="album-cover" />
+                    <p class="track-name"><strong>{{ track.title }}</strong></p>
+                    <p class="artist-name">by {{ track.artist }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="logout">
+            <button @click="logout">Logout</button>
+        </div>
     </div>
 </template>
 
@@ -33,13 +48,15 @@ export default {
         return {
             username: '',
             recentTracks: [],
-            recentTracksWithBpm: []
+            recentTracksWithBpm: [],
+            playlist: null
         };
     },
     mounted() {
         this.getUser();
-        this.getRecentlyPlayed();
+        // this.getRecentlyPlayed();
         // this.getRecentlyPlayedWithBPM();
+        this.getTracksForSession();
     },
     methods: {
         async getUser() {
@@ -113,9 +130,8 @@ export default {
         async getRecentlyPlayedWithBPM() {
             console.log('Getting recently played tracks with BPM');
             try {
-                // get last 10 played tracks. 10 is a request parameter
-            
-                const response = await fetch('http://localhost:5000/spotify/recently-played/bpm', {
+                const limit = 20;
+                const response = await fetch('http://localhost:5000/spotify/recently-played/bpm?limit=' + limit, {
                     credentials: 'include'
                 });
 
@@ -145,6 +161,58 @@ export default {
                     }
                 } else {
                     console.error('Failed to fetch recently played tracks:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error during fetch:', error);
+            }
+        },
+        async getTracksForSession() {
+            console.log('Getting recently played tracks');
+            try {
+                const pace = 5;
+                const distance = 10;
+                const height = 170;
+                
+                const response = await fetch(`http://localhost:5000/runningsession/playlist?pace=${pace}&distance=${distance}&height=${height}`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const rawData = await response.text();
+
+                    let data;
+                    try {
+                        data = JSON.parse(rawData);
+
+                        if (typeof data === 'string') {
+                            // For some reason the data is double-encoded
+                            data = JSON.parse(data);
+                        }
+                        console.log('Playlist:', data);
+                        this.playlist = data;
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                        return;
+                    }
+                } else {
+                    console.error('Failed to fetch recently played tracks:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error during fetch:', error);
+            }
+        },
+        async logout() {
+            console.log('Logging out');
+            try {
+                const response = await fetch('http://localhost:5000/auth/logout', {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    console.log('Logged out successfully');
+                    this.$router.push({ name: 'SpotifyLogin' });
+                } else {
+                    console.error('Failed to logout:', response.statusText);
                 }
             } catch (error) {
                 console.error('Error during fetch:', error);

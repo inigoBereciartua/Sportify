@@ -28,7 +28,13 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddHttpClient<SpotifyService>();  // Register Spotify service
+builder.Services.AddHttpClient<SpotifyService>();
+builder.Services.AddHttpClient<RunningSessionService>();
+
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();  
 
 builder.Services.AddAuthentication(options =>
 {
@@ -47,6 +53,7 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("playlist-modify-public");
     options.Scope.Add("playlist-modify-private");
     options.Scope.Add("user-read-recently-played");
+    options.Scope.Add("user-library-read");
 });
 
 var app = builder.Build();

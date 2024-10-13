@@ -12,6 +12,7 @@ public class AuthController : ControllerBase
         {
             RedirectUri = "http://localhost:8080/callback"
         };
+        authenticationProperties.Items["show_dialog"] = "true";
 
         return Challenge(authenticationProperties, "Spotify");
     }
@@ -20,6 +21,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync();
+        Console.WriteLine("User logged out.");
         return Redirect("/");
     }
 }
