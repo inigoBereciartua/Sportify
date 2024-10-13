@@ -1,40 +1,64 @@
 <template>
     <div>
-        <h1 v-if="username">Welcome, {{ username }}!</h1>
-        <p v-else>Fetching user info...</p>  <!-- Fallback text if username is empty -->
+        <div v-if="playlist == null">
+            <h1 v-if="username">Welcome, {{ username }}!</h1>
+            <p v-else>Fetching user info...</p>  <!-- Fallback text if username is empty -->
 
-        <div v-if="playlist != null && playlist.songs.length > 0" class="recent-tracks">
-            <h2>Playlist tracks: {{ playlist.name }}</h2>
-            <div class="progress-container">
-                <h4>Playlist duration: {{ currentSelectedSongsDurationInMinutes }} minutes / {{ neededDurationForSessionInMinutes }} minutes needed</h4>
-                <progress :value="currentSelectedSongsDurationInMinutes" :max="neededDurationForSessionInMinutes"></progress>
-            </div>
-            <div class="track-grid">
-            <div
-                v-for="(track, index) in playlist.songs"
-                :key="index"
-                :class="{ 'selected-song': selectedSongsIds.includes(track.id) }"
-                :style="{ backgroundColor: selectedSongsIds.includes(track.id) ? '#182c25' : '#455b55' }"
-                class="track-item"
-                @click="toggleSelection(track.id)"
-            >
-                <img :src="track.picture" alt="Album Cover" class="album-cover" />
-                <p class="track-name"><strong>{{ track.title }}</strong></p>
-                <p class="artist-name">by {{ track.artist }}</p>
-            </div>
-            </div>
-            <div class="submit-container">
-                <button @click="submitSelectedSongs">Submit Selected Songs</button>
+            <div class="form-container">
+                <form @submit.prevent="getTracksForSession">
+                    <div class="form-group">
+                        <label for="height">Height:</label>
+                        <input type="number" v-model="height" id="height" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pace">Pace:</label>
+                        <input type="number" step="0.1" v-model="pace" id="pace" />
+                    </div>
+                    <div class="form-group">
+                        <label for="distance">Distance:</label>
+                        <input type="number" step="0.1" v-model="distance" id="distance" />
+                    </div>
+                    <div class="submit-container">
+                        <button type="submit">Submit</button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <div class="logout">
-            <button @click="logout">Logout</button>
+        <div v-else>
+            <div v-if="playlist.songs.length > 0" class="recent-tracks">
+                <h2>Playlist tracks: {{ playlist.name }}</h2>
+                <div class="playlist-data">
+                    <div class="progress-container">
+                        <h4>Playlist duration: {{ currentSelectedSongsDurationInMinutes }} minutes / {{ neededDurationForSessionInMinutes }} minutes needed</h4>
+                        <progress :value="currentSelectedSongsDurationInMinutes" :max="neededDurationForSessionInMinutes"></progress>
+                    </div>
+                    <div class="submit-container">
+                        <button @click="submitSelectedSongs">Submit Selected Songs</button>
+                    </div>
+                    <div class="track-grid">
+                        <div
+                            v-for="(track, index) in playlist.songs"
+                            :key="index"
+                            :class="{ 'selected-song': selectedSongsIds.includes(track.id) }"
+                            :style="{ backgroundColor: selectedSongsIds.includes(track.id) ? '#182c25' : '#455b55' }"
+                            class="track-item"
+                            @click="toggleSelection(track.id)"
+                        >
+                            <img :src="track.picture" alt="Album Cover" class="album-cover" />
+                            <p class="track-name"><strong>{{ track.title }}</strong></p>
+                            <p class="artist-name">by {{ track.artist }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script>
+import { useToast } from "vue-toastification";
+
 export default {
     name: 'SpotifyCallback',
     data() {
@@ -43,19 +67,33 @@ export default {
             recentTracks: [],
             recentTracksWithBpm: [],
             playlist: null,
-            selectedSongsIds: []
+            selectedSongsIds: [],
+            /* Form fields */
+            height: 170,
+            pace: 5.0,
+            distance: 5.0
         };
     },
     mounted() {
         this.getUser();
-        this.getTracksForSession();
     },
 
     watch: {
         playlist: {
             handler: function (newVal) {
                 if (newVal != null && newVal.songs != null) {
-                    this.selectedSongsIds = newVal.songs.map(song => song.id);
+                    // Select values from the playlist until the needed duration is reached
+                    let duration = 0;
+                    let selectedSongs = [];
+                    for (const song of newVal.songs) {
+                        if (duration <= newVal.neededDurationInSeconds) {
+                            selectedSongs.push(song.id);
+                            duration += song.duration;
+                        } else {
+                            break;
+                        }
+                    }
+                    this.selectedSongsIds = selectedSongs;
                 }
             },
             deep: true
@@ -101,7 +139,7 @@ export default {
                         
                         console.log('User info:', data);
                         if (data && data.username) {
-                            this.username = data.username;
+                            this.username = data.id;
                         } else {
                             console.error('username not found in response data');
                         }
@@ -119,11 +157,7 @@ export default {
         async getTracksForSession() {
             console.log('Getting recently played tracks');
             try {
-                const pace = 5;
-                const distance = 10;
-                const height = 170;
-                
-                const response = await fetch(`http://localhost:5000/runningsession/playlist?pace=${pace}&distance=${distance}&height=${height}`, {
+                const response = await fetch(`http://localhost:5000/runningsession/playlist?pace=${this.pace}&distance=${this.distance}&height=${this.height}`, {
                     credentials: 'include'
                 });
 
@@ -197,7 +231,9 @@ export default {
             })
                 .then(response => {
                     if (response.ok) {
-                        console.log('Selected songs submitted successfully');                        
+                        const toast = useToast();
+                        toast.success('Playlist has been successfully created!');
+                        this.playlist = null;
                     } else {
                         console.error('Failed to submit selected songs:', response.statusText);
                     }
@@ -276,13 +312,13 @@ progress {
 }
 
 progress::-webkit-progress-bar {
-  background-color: #455b55;
+  background-color: #182c25;
   border-radius: 10px;
 }
 
 progress::-webkit-progress-value {
-  background-color: #182c25;
-  border-radius: 10px;
+    background-color: #1db954;
+    border-radius: 10px;
 }
 
 .submit-container {
@@ -290,18 +326,40 @@ progress::-webkit-progress-value {
   margin-top: 20px;
 }
 
-.submit-container button {
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #182c25;
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #212121;
+  border-radius: 10px;
   color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
-.submit-container button:hover {
-  background-color: #455b55;
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #455b55;
+  border-radius: 5px;
+}
+
+.playlist-data {
+  background-color: #212121;
+  padding: 20px;
+  border-radius: 10px;
 }
 
 </style>
