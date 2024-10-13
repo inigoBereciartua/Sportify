@@ -45,7 +45,7 @@ public class RunningSessionService
         Console.WriteLine($"Total duration: {totalDurationInSeconds}, Duration needed: {durationInSeconds}, With +40%: {neededDurationInSeconds}, Song number: {tracks.Count}");
 
         var name = $"Running Session - {distance}km - {paceInMinPerKm}min/km - {bpm} BPM ";
-        var response = new PlaylistProposal(name, bpm, (int)neededDurationInSeconds, tracks);
+        var response = new PlaylistProposal(name, bpm, (int)durationInSeconds, tracks);
         return response;
     }
 

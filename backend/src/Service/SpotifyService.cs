@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using sportify.backend.Models;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 public class SpotifyService
 {
@@ -31,12 +32,13 @@ public class SpotifyService
         _logger.LogInformation("Successfully fetched user info from Spotify.");
 
         var userInfo = JsonDocument.Parse(fetchedResponse);
+        var id = userInfo.RootElement.GetProperty("id").GetString();
         var displayName = userInfo.RootElement.GetProperty("display_name").GetString();
         var email = userInfo.RootElement.GetProperty("email").GetString();
 
         _logger.LogInformation("Parsed user info. Display name: {DisplayName}, Email: {Email}", displayName, email);
 
-        return new UserInfo(displayName, email);
+        return new UserInfo(id, displayName, email);
     }
 
     public async Task<List<Song>> GetRecentlyPlayedTracksAsync(string accessToken, int limit)
@@ -304,4 +306,80 @@ public class SpotifyService
         _logger.LogInformation("Returning {TrackCount} tracks after BPM filtering.", tracks.Count);
         return tracks;
     }
+
+    public async Task<string> CreatePlaylist(string accessToken, NewPlaylist newPlaylist)
+    {
+        _logger.LogInformation("Creating a new playlist on Spotify.");
+        var userInfo = await GetUserInfoAsync(accessToken);
+        if (userInfo == null)
+        {
+            _logger.LogWarning("Failed to get user info. Aborting playlist creation.");
+            return null;
+        }
+
+        var userId = userInfo.Id;
+
+        var playlistData = new Dictionary<string, object>
+        {
+            { "name", newPlaylist.Name },
+            { "public", newPlaylist.Visible },
+            { "collaborative", newPlaylist.Colaborative },
+            { "description", "Created by Sportify" }
+        };
+
+        var json = JsonSerializer.Serialize(playlistData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var response = await _httpClient.PostAsync($"https://api.spotify.com/v1/users/{userId}/playlists", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("Failed to create playlist. Status code: {StatusCode}", response.StatusCode);
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Error content: {ErrorContent}", errorContent);
+            return null;
+        }
+
+        var createdPlaylistContent = await response.Content.ReadAsStringAsync();
+        var createdPlaylist = JsonDocument.Parse(createdPlaylistContent);
+        var playlistId = createdPlaylist.RootElement.GetProperty("id").GetString();
+
+        _logger.LogInformation("Successfully created playlist with ID {PlaylistId}.", playlistId);
+
+        // Add tracks to the playlist
+
+        var trackUris = newPlaylist.SongIds.Select(id => $"spotify:track:{id}").ToList();
+
+        var addTracksData = new Dictionary<string, object>
+        {
+            { "uris", trackUris }
+        };
+
+        var addTracksJson = JsonSerializer.Serialize(addTracksData);
+        var addTracksContent = new StringContent(addTracksJson, Encoding.UTF8, "application/json");
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var addTracksResponse = await _httpClient.PostAsync($"https://api.spotify.com/v1/playlists/{playlistId}/tracks", addTracksContent);
+
+        if (!addTracksResponse.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("Failed to add tracks to playlist. Status code: {StatusCode}", addTracksResponse.StatusCode);
+
+            var errorContent = await addTracksResponse.Content.ReadAsStringAsync();
+
+            _logger.LogWarning("Error content: {ErrorContent}", errorContent);
+
+            return null;
+        }
+
+        _logger.LogInformation("Successfully added tracks to playlist with ID {PlaylistId}.", playlistId);
+
+        return playlistId;
+    }
+
+
+    
 }

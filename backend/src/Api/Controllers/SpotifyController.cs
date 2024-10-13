@@ -44,4 +44,34 @@ public class SpotifyController : ControllerBase
         var tracks = await _spotifyService.GetRecentTracksByBpmAsync(accessToken, bpmTarget, 5);    
         return Ok(tracks);
     }
+
+    [HttpPost("playlist")]
+    public async Task<ActionResult<string>> CreatePlaylist([FromBody] NewPlaylist newPlaylist)
+    {
+        Console.WriteLine("Creating playlist...");
+        if (newPlaylist == null)
+        {
+            return BadRequest("Playlist data is required.");
+        }
+        if (string.IsNullOrEmpty(newPlaylist.Name))
+        {
+            return BadRequest("Playlist name is required.");
+        }
+        if (newPlaylist.SongIds == null || newPlaylist.SongIds.Count == 0)
+        {
+            return BadRequest("At least one song is required.");
+        }
+
+        var accessToken = await HttpContext.GetTokenAsync("access_token");
+        if (string.IsNullOrEmpty(accessToken)) return Unauthorized();
+
+        var playlistId = await _spotifyService.CreatePlaylist(accessToken, newPlaylist);
+        if (playlistId == null)
+        {
+            return StatusCode(500, "Failed to create playlist.");
+        }
+
+        return CreatedAtAction(nameof(CreatePlaylist), new { id = playlistId }, newPlaylist);
+    }
+
 }

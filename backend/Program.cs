@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("http://localhost:5000");
@@ -15,6 +17,12 @@ builder.Services.Configure<RouteOptions>(options =>
     options.LowercaseUrls = true;  // This ensures all routes are lowercase
     options.LowercaseQueryStrings = true;  // This makes query strings lowercase (optional)
 });
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
+
 
 builder.Services.AddCors(options =>
 {
