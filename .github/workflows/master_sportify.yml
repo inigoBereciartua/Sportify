@@ -26,14 +26,14 @@ jobs:
 
       # Step 4: Publish the output from the 'backend' folder
       - name: dotnet publish
-        run: dotnet publish ./backend -c Release -o "${{env.DOTNET_ROOT}}/myapp" # Wrap output path in quotes
+        run: dotnet publish ./backend -c Release -o ./myapp # Output to './myapp' directory
 
       # Step 5: Upload the build artifact for deployment
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: "${{env.DOTNET_ROOT}}/myapp"
+          path: ./myapp # Upload the './myapp' directory
 
   deploy:
     runs-on: windows-latest
@@ -49,7 +49,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: .net-app # Download the previously uploaded artifact
       
       # Step 7: Log in to Azure using service principal credentials
       - name: Login to Azure
@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'sportify'
           slot-name: 'Production'
-          package: "${{env.DOTNET_ROOT}}/myapp" # Wrap package path in quotes
+          package: ./myapp # Ensure this matches the artifact path
