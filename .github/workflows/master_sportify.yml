@@ -43,35 +43,31 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write
-
+  
     steps:
-      # Step 6: Download the artifact from the build job
+      # Step 1: Download the artifact from the build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-
-      # Step 7: List downloaded files (debugging step)
-      - name: List downloaded artifact files
+  
+      # Step 2: List the files (for debugging)
+      - name: List downloaded files
         run: ls -R
-
-      # Step 8: Log in to Azure using service principal credentials
+  
+      # Step 3: Log in to Azure using service principal credentials
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D89A3066BFD149EFABC5FE60FB50E288 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B58AA134B41E41E78E5934952C39C621 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_50FA2C5590D240D89C270074AF0BB573 }}
-
-      # Step 9: List files before deployment (debugging step)
-      - name: List files before deployment
-        run: ls -R
-
-      # Step 10: Deploy the artifact to Azure Web App
+  
+      # Step 4: Deploy the artifact to Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'sportify'
           slot-name: 'Production'
-          package: ./myapp # Ensure this matches the artifact path
+          package: .
