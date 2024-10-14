@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 public class AuthController : ControllerBase
 {
     [HttpGet("login")]
-    public IActionResult Login()
+    public IActionResult Login([FromQuery] string redirectUri)
     {
         var authenticationProperties = new AuthenticationProperties
         {
-            RedirectUri = "http://localhost:8080/playlist-info-form"
+            RedirectUri = redirectUri
         };
         authenticationProperties.Items["show_dialog"] = "true";
 

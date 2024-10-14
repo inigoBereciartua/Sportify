@@ -66,3 +66,8 @@ docker-compose.override.yml
 # Ignore temporary files and compiled code
 *.swp
 *.tmp
+
+# ASP NET Core settings
+appsettings.Development.json
+appsettings.Production.json
+appsettings.json
