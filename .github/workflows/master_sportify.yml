@@ -14,19 +14,24 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Step 1: Checkout code from GitHub repository
       - uses: actions/checkout@v4
 
+      # Step 2: Set up .NET Core environment
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
+      # Step 3: Build the project in the 'backend' folder
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release ./backend # Specify the backend folder
 
+      # Step 4: Publish the output from the 'backend' folder
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish ./backend -c Release -o ${{env.DOTNET_ROOT}}/myapp # Specify the backend folder
 
+      # Step 5: Upload the build artifact for deployment
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -43,11 +48,13 @@ jobs:
       id-token: write #This is required for requesting the JWT
 
     steps:
+      # Step 6: Download the artifact from the build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
       
+      # Step 7: Log in to Azure using service principal credentials
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -55,11 +62,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B58AA134B41E41E78E5934952C39C621 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_50FA2C5590D240D89C270074AF0BB573 }}
 
+      # Step 8: Deploy the artifact to Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'sportify'
           slot-name: 'Production'
-          package: .
-          
+          package: ${{env.DOTNET_ROOT}}/myapp # Ensure the correct package path is specified
