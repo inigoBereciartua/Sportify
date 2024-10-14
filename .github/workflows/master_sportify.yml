@@ -22,18 +22,18 @@ jobs:
 
       # Step 3: Build the project in the 'backend' folder
       - name: Build with dotnet
-        run: dotnet build --configuration Release ./backend # Specify the backend folder
+        run: dotnet build --configuration Release ./backend
 
       # Step 4: Publish the output from the 'backend' folder
       - name: dotnet publish
-        run: dotnet publish ./backend -c Release -o ./myapp # Output to './myapp' directory
+        run: dotnet publish ./backend -c Release -o ./myapp
 
       # Step 5: Upload the build artifact for deployment
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ./myapp # Upload the './myapp' directory
+          path: ./myapp
 
   deploy:
     runs-on: windows-latest
@@ -42,16 +42,20 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write
 
     steps:
       # Step 6: Download the artifact from the build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app # Download the previously uploaded artifact
-      
-      # Step 7: Log in to Azure using service principal credentials
+          name: .net-app
+
+      # Step 7: List downloaded files (debugging step)
+      - name: List downloaded artifact files
+        run: ls -R
+
+      # Step 8: Log in to Azure using service principal credentials
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -59,7 +63,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B58AA134B41E41E78E5934952C39C621 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_50FA2C5590D240D89C270074AF0BB573 }}
 
-      # Step 8: Deploy the artifact to Azure Web App
+      # Step 9: List files before deployment (debugging step)
+      - name: List files before deployment
+        run: ls -R
+
+      # Step 10: Deploy the artifact to Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
