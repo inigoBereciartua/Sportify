@@ -67,8 +67,8 @@ builder.Services.AddAuthentication(options =>
     {
         throw new ArgumentNullException("Spotify:ClientSecret");
     }
-    options.ClientId = builder.Configuration[spotifyClientId] ?? throw new ArgumentNullException("Spotify:ClientId");
-    options.ClientSecret = builder.Configuration[spotifyClientSecret] ?? throw new ArgumentNullException("Spotify:ClientSecret");
+    options.ClientId = spotifyClientId;
+    options.ClientSecret = spotifyClientSecret;
     options.CallbackPath = "/signin-spotify";
     options.SaveTokens = true;
     options.Scope.Add("user-read-email");
