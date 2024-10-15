@@ -4,18 +4,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("http://localhost:5000");
 
-// Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 
-// Add this line to register controllers
-builder.Services.AddControllers();  // <-- This is required for controllers to work
+builder.Services.AddControllers();
+
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.Configure<RouteOptions>(options =>
 {
-    options.LowercaseUrls = true;  // This ensures all routes are lowercase
-    options.LowercaseQueryStrings = true;  // This makes query strings lowercase (optional)
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
 });
 
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -42,7 +42,7 @@ builder.Services.AddHttpClient<RunningSessionService>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Logging.AddDebug();  
+builder.Logging.AddDebug();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -53,8 +53,21 @@ builder.Services.AddAuthentication(options =>
 .AddCookie()
 .AddSpotify(options =>
 {
-    options.ClientId = builder.Configuration["Spotify:ClientId"] ?? throw new ArgumentNullException("Spotify:ClientId");
-    options.ClientSecret = builder.Configuration["Spotify:ClientSecret"] ?? throw new ArgumentNullException("Spotify:ClientSecret");
+
+    var spotifyClientId = builder.Configuration["Spotify:ClientId"];
+    var spotifyClientSecret = builder.Configuration["Spotify:ClientSecret"];
+
+    if (string.IsNullOrEmpty(spotifyClientId))
+    {
+        throw new ArgumentNullException("Spotify:ClientId");
+    }
+
+    if (string.IsNullOrEmpty(spotifyClientSecret))
+    {
+        throw new ArgumentNullException("Spotify:ClientSecret");
+    }
+    options.ClientId = builder.Configuration[spotifyClientId] ?? throw new ArgumentNullException("Spotify:ClientId");
+    options.ClientSecret = builder.Configuration[spotifyClientSecret] ?? throw new ArgumentNullException("Spotify:ClientSecret");
     options.CallbackPath = "/signin-spotify";
     options.SaveTokens = true;
     options.Scope.Add("user-read-email");
@@ -66,7 +79,6 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -77,6 +89,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowVueClient");
 
-app.MapControllers();  // Enable attribute routing for controllers
+app.MapControllers();
 
-app.Run();
+app.Run("http://0.0.0.0:5000");
