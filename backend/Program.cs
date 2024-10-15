@@ -54,8 +54,9 @@ builder.Services.AddAuthentication(options =>
 .AddSpotify(options =>
 {
 
-    var spotifyClientId = builder.Configuration["Spotify:ClientId"];
-    var spotifyClientSecret = builder.Configuration["Spotify:ClientSecret"];
+    var spotifyClientId = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
+    var spotifyClientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
+
 
     if (string.IsNullOrEmpty(spotifyClientId))
     {
